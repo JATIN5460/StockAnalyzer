@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StockMind — API Tester</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #05070f;
+    color: #e0e4f0;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    padding: 28px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #1a1f35;
+  }
+
+  .logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #00f5a0, #0ea5e9);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #000;
+  }
+
+  h1 { font-size: 20px; font-weight: 800; color: #fff; }
+  .sub { font-size: 10px; color: #2a3050; letter-spacing: 3px; margin-top: 2px; }
+
+  .server-status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #4a5280;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #1a1f35;
+  }
+  .dot.online  { background: #00f5a0; animation: blink 2s infinite; }
+  .dot.offline { background: #f43f5e; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #0c0f1d;
+    border: 1px solid #1a1f35;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 10px;
+    color: #3a4565;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  label {
+    font-size: 10px;
+    color: #3a4565;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+    margin-top: 10px;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: #070910;
+    border: 1px solid #1a1f35;
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #e0e4f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus { border-color: #00f5a0; }
+  textarea { resize: vertical; }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+  button {
+    background: linear-gradient(135deg, #00f5a0, #0ea5e9);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #000;
+    font-weight: 700;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  button:hover   { opacity: 0.85; }
+  button:active  { opacity: 0.7; }
+
+  button.red  { background: linear-gradient(135deg, #f43f5e, #f59e0b); }
+  button.grey {
+    background: transparent;
+    border: 1px solid #1a1f35;
+    color: #4a5280;
+  }
+  button.grey:hover { border-color: #3a4565; color: #6a7290; }
+
+  .output-card {
+    background: #0c0f1d;
+    border: 1px solid #1a1f35;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .output-header h2 {
+    font-size: 10px;
+    color: #3a4565;
+    letter-spacing: 2px;
+  }
+
+  #output {
+    background: #050709;
+    border: 1px solid #111525;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 220px;
+    max-height: 480px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .tag   { color: #0ea5e9; }
+  .str   { color: #00f5a0; }
+  .num   { color: #f59e0b; }
+  .bool  { color: #a78bfa; }
+  .dim   { color: #2a3050; }
+  .ok    { color: #00f5a0; }
+  .err   { color: #f43f5e; }
+  .warn  { color: #f59e0b; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 8px;
+  }
+  .badge.get  { background: rgba(14,165,233,0.15); color: #0ea5e9; }
+  .badge.post { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .badge.ok   { background: rgba(0,245,160,0.15);  color: #00f5a0; }
+  .badge.fail { background: rgba(244,63,94,0.15);  color: #f43f5e; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1a1f35; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">⚡</div>
+  <div>
+    <h1>StockMind API Tester</h1>
+    <div class="sub">BACKEND ENDPOINT TESTER</div>
+  </div>
+  <div class="server-status">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">Checking...</span>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- GET Endpoints -->
+  <div class="card">
+    <h2>STOCK DATA — GET ENDPOINTS</h2>
+
+    <label>TICKER SYMBOL</label>
+    <input id="ticker" value="AAPL" placeholder="e.g. AAPL, TSLA, NVDA" />
+
+    <div class="btn-row">
+      <button onclick="get('health')">❤️ Health</button>
+      <button onclick="get('quote')">💰 Quote</button>
+      <button onclick="get('history')">📈 History</button>
+      <button onclick="get('overview')">🏢 Overview</button>
+      <button onclick="get('full')">⚡ Full (All)</button>
+    </div>
+  </div>
+
+  <!-- POST Endpoints -->
+  <div class="card">
+    <h2>AI ENDPOINTS — POST REQUESTS</h2>
+
+    <label>TICKER (for AI)</label>
+    <input id="ai-ticker" value="AAPL" placeholder="e.g. AAPL" />
+
+    <label>CHAT MESSAGE</label>
+    <textarea id="chat-msg" rows="3">Is this stock a good buy right now?</textarea>
+
+    <div class="btn-row">
+      <button onclick="analyze()">🤖 AI Analyze</button>
+      <button onclick="chat()">💬 AI Chat</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Output -->
+<div class="output-card">
+  <div class="output-header">
+    <h2>RESPONSE OUTPUT</h2>
+    <div style="display:flex; gap:8px;">
+      <button class="grey" onclick="clearOut()">Clear</button>
+      <button class="grey" onclick="copyOut()">Copy</button>
+    </div>
+  </div>
+  <div id="output"><span class="dim">// Click any button above to test an endpoint...</span></div>
+</div>
+
+<script>
+  const BASE = "http://localhost:5000";
+  const out  = document.getElementById("output");
+
+  // ── Server health check ──────────────────────────────────────────
+  async function checkServer() {
+    const dot  = document.getElementById("dot");
+    const text = document.getElementById("status-text");
+    try {
+      const r = await fetch(`${BASE}/health`);
+      if (r.ok) {
+        dot.className  = "dot online";
+        text.textContent = "Server online — localhost:5000";
+      } else throw new Error();
+    } catch {
+      dot.className  = "dot offline";
+      text.textContent = "Server offline — run: npm run dev";
+    }
+  }
+  checkServer();
+  setInterval(checkServer, 4000);
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function loading(msg) {
+    out.innerHTML = `<span class="warn">⏳ ${msg}</span>`;
+  }
+
+  function print(method, url, status, data) {
+    const ts      = new Date().toLocaleTimeString();
+    const isOk    = status >= 200 && status < 300;
+    const badge   = `<span class="badge ${isOk ? "ok" : "fail"}">${status}</span>`;
+    const mBadge  = `<span class="badge ${method === "GET" ? "get" : "post"}">${method}</span>`;
+    out.innerHTML =
+      `<span class="dim">// ${ts}</span>\n` +
+      `${mBadge}${badge} <span class="${isOk ? "ok" : "err"}">${url}</span>\n\n` +
+      highlight(JSON.stringify(data, null, 2));
+  }
+
+  function printError(method, url, msg) {
+    out.innerHTML =
+      `<span class="err">✖ ${method} ${url}</span>\n\n` +
+      `<span class="err">${msg}</span>\n\n` +
+      `<span class="dim">Is the server running?\n→ cd stock-backend\n→ npm run dev</span>`;
+  }
+
+  function highlight(json) {
+    return json
+      .replace(/("[\w\s]+")\s*:/g,        '<span class="tag">$1</span>:')
+      .replace(/:\s*"([^"]+)"/g,          ': <span class="str">"$1"</span>')
+      .replace(/:\s*(-?\d+\.?\d*)/g,      ': <span class="num">$1</span>')
+      .replace(/:\s*(true|false)/g,        ': <span class="bool">$1</span>')
+      .replace(/:\s*(null)/g,              ': <span class="dim">$1</span>');
+  }
+
+  function clearOut() { out.innerHTML = '<span class="dim">// cleared</span>'; }
+  function copyOut()  { navigator.clipboard.writeText(out.innerText).then(() => alert("Copied!")); }
+
+  // ── GET requests ─────────────────────────────────────────────────
+  async function get(type) {
+    const ticker = document.getElementById("ticker").value.trim().toUpperCase();
+    const url    = type === "health"
+      ? `${BASE}/health`
+      : `${BASE}/api/stocks/${ticker}/${type}`;
+
+    loading(`Fetching ${type.toUpperCase()}${ticker ? " for " + ticker : ""}...`);
+
+    try {
+      const r    = await fetch(url);
+      const data = await r.json();
+      print("GET", url, r.status, data);
+    } catch(e) {
+      printError("GET", url, e.message);
+    }
+  }
+
+  // ── POST /api/ai/analyze ─────────────────────────────────────────
+  async function analyze() {
+    const ticker = document.getElementById("ai-ticker").value.trim().toUpperCase();
+    if (!ticker) { alert("Enter a ticker symbol"); return; }
+
+    const url = `${BASE}/api/ai/analyze`;
+    loading(`Running AI analysis for ${ticker}... (may take 5–10s)`);
+
+    try {
+      const r    = await fetch(url, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ ticker }),
+      });
+      const data = await r.json();
+      print("POST", url, r.status, data);
+    } catch(e) {
+      printError("POST", url, e.message);
+    }
+  }
+
+  // ── POST /api/ai/chat ────────────────────────────────────────────
+  async function chat() {
+    const ticker = document.getElementById("ai-ticker").value.trim().toUpperCase();
+    const msg    = document.getElementById("chat-msg").value.trim();
+    if (!ticker || !msg) { alert("Enter both ticker and message"); return; }
+
+    const url = `${BASE}/api/ai/chat`;
+    loading(`Sending chat message for ${ticker}...`);
+
+    try {
+      const r    = await fetch(url, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          ticker,
+          messages: [{ role: "user", content: msg }],
+        }),
+      });
+      const data = await r.json();
+      print("POST", url, r.status, data);
+    } catch(e) {
+      printError("POST", url, e.message);
+    }
+  }
+</script>
+</body>
+</html>
